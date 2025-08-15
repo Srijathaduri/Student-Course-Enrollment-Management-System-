@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Enrollment</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
+        input, button {
+            width: 100%;
+            padding: 8px;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+        }
+        .result {
+            margin-top: 15px;
+            font-weight: bold;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Enroll Student</h2>
+    <label for="studentId">Student ID:</label>
+    <input type="number" id="studentId" placeholder="Enter Student ID" required>
+
+    <label for="courseId">Course ID:</label>
+    <input type="number" id="courseId" placeholder="Enter Course ID" required>
+
+    <button onclick="enrollStudent()">Submit</button>
+
+    <div id="result" class="result"></div>
+</div>
+
+<script>
+async function enrollStudent() {
+    const studentId = document.getElementById('studentId').value;
+    const courseId = document.getElementById('courseId').value;
+
+    if (!studentId || !courseId) {
+        document.getElementById('result').innerText = "Please enter both IDs.";
+        return;
+    }
+
+    try {
+        // Step 1: Make enrollment request
+        const enrollResponse = await fetch('http://localhost:3000/enrollments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: studentId, course_id: courseId })
+        });
+
+        // Safely parse JSON
+        let enrollData;
+        try {
+            enrollData = await enrollResponse.json();
+        } catch {
+            const text = await enrollResponse.text();
+            document.getElementById('result').innerText = "Server returned HTML instead of JSON:\n" + text;
+            return;
+        }
+
+        if (!enrollResponse.ok) {
+            document.getElementById('result').innerText = enrollData.message || "Error enrolling student.";
+            return;
+        }
+
+        // Step 2: Use the course name returned by backend if available
+        const courseName = enrollData.course_name || "Unknown course";
+        document.getElementById('result').innerText = `Enrolled successfully in "${courseName}"`;
+
+    } catch (error) {
+        document.getElementById('result').innerText = "Error: " + error.message;
+    }
+}
+</script>
+
+</body>
+</html>
